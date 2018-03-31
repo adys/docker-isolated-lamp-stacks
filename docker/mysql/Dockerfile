@@ -1,0 +1,9 @@
+FROM mysql:5.7
+
+ARG APP_USER_UID
+ARG APP_NAME
+
+RUN groupadd -g $APP_USER_UID $APP_NAME && \
+    useradd -r -u $APP_USER_UID -g $APP_NAME $APP_NAME
+
+USER $APP_NAME

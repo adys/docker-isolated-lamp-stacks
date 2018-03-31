@@ -1,0 +1,66 @@
+version: '3.1'
+services:
+    nginx:
+        build:
+            context: nginx
+            dockerfile: Dockerfile
+            args:
+                APP_USER_UID: $APP_USER_UID
+                APP_NAME: $APP_NAME
+        image: nginx-test:v0.1
+        ports:
+          - "${APP_PORT}:8080"
+        volumes:
+          - /data/app/:/app:ro
+          - ./nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
+          - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+        networks:
+          - dmz
+          - web
+    php:
+        build:
+            context: php
+            dockerfile: Dockerfile
+            args:
+                APP_USER_UID: $APP_USER_UID
+                APP_NAME: $APP_NAME
+        image: php-test:v0.3
+        volumes:
+          - /data/app/:/app:ro
+        networks:
+          - web
+          - data
+    mysql:
+        build:
+            context: mysql
+            dockerfile: Dockerfile
+            args:
+                APP_USER_UID: $APP_USER_UID
+                APP_NAME: $APP_NAME
+        image: mysql-test:v0.1
+        environment:
+            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/rpass
+            MYSQL_DATABASE: db
+            MYSQL_USER: /run/secrets/dbuser
+            MYSQL_PASSWORD_FILE: /run/secrets/dbpass
+        secrets:
+          - rpass
+          - dbuser
+          - dbpass
+        volumes:
+          - ./mysql/mysql-entrypoint:/docker-entrypoint-initdb.d/
+          - /data/mysql/${APP_NAME}/:/var/lib/mysql
+        networks:
+          - web
+          - data
+secrets:
+    rpass:
+        external: true
+    dbuser:
+        external: true
+    dbpass:
+        external: true
+networks:
+    dmz:
+    web:
+    data:
