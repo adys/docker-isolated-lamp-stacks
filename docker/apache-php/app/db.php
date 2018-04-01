@@ -1,5 +1,8 @@
 <?php
-$mysqli = new mysqli("mysql","dbuser","test","db");
+$dbhost = 'mysql';
+$dbuser = file_get_contents('/run/secrets/dbuser');
+$dbpass = file_get_contents('/run/secrets/dbpass');
+$mysqli = new mysqli($dbhost,$dbuser,$dbpass,"db");
 
 if (mysqli_connect_errno()) {
     echo "Failed to connect to MySQL: " . mysqli_connect_error();

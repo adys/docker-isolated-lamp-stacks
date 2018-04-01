@@ -1,9 +1,10 @@
 FROM mysql:5.7
 
-ARG APP_USER_UID
-ARG APP_NAME
+ARG STACK_ID
 
-RUN groupadd -g $APP_USER_UID $APP_NAME && \
-    useradd -r -u $APP_USER_UID -g $APP_NAME $APP_NAME
+RUN addgroup --gid $STACK_ID --system app
+RUN adduser --uid $STACK_ID --gid $STACK_ID --system --disabled-login --disabled-password app
 
-USER $APP_NAME
+COPY mysql-entrypoint/ /docker-entrypoint-initdb.d/
+
+USER app

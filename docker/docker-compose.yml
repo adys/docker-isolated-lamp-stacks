@@ -1,66 +1,48 @@
 version: '3.1'
 services:
-    nginx:
+    apache-php:
         build:
-            context: nginx
+            context: apache-php
             dockerfile: Dockerfile
             args:
-                APP_USER_UID: $APP_USER_UID
-                APP_NAME: $APP_NAME
-        image: nginx-test:v0.1
+                STACK_ID: $STACK_ID
+        image: o-apache-php:v0.1
         ports:
-          - "${APP_PORT}:8080"
-        volumes:
-          - /data/app/:/app:ro
-          - ./nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
-          - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+          - "${STACK_PORT}:8080"
+        secrets:
+          - dbuser
+          - dbpass
         networks:
           - dmz
-          - web
-    php:
-        build:
-            context: php
-            dockerfile: Dockerfile
-            args:
-                APP_USER_UID: $APP_USER_UID
-                APP_NAME: $APP_NAME
-        image: php-test:v0.3
-        volumes:
-          - /data/app/:/app:ro
-        networks:
-          - web
           - data
     mysql:
         build:
             context: mysql
             dockerfile: Dockerfile
             args:
-                APP_USER_UID: $APP_USER_UID
-                APP_NAME: $APP_NAME
-        image: mysql-test:v0.1
+                STACK_ID: $STACK_ID
+        image: o-mysql:v0.1
         environment:
             MYSQL_ROOT_PASSWORD_FILE: /run/secrets/rpass
             MYSQL_DATABASE: db
-            MYSQL_USER: /run/secrets/dbuser
+            MYSQL_USER_FILE: /run/secrets/dbuser
             MYSQL_PASSWORD_FILE: /run/secrets/dbpass
         secrets:
           - rpass
           - dbuser
           - dbpass
         volumes:
-          - ./mysql/mysql-entrypoint:/docker-entrypoint-initdb.d/
-          - /data/mysql/${APP_NAME}/:/var/lib/mysql
+          - ${STACK_DIR}/${STACK_ID}/mysql:/var/lib/mysql
         networks:
-          - web
           - data
 secrets:
     rpass:
-        external: true
+        file: ${STACK_DIR}/${STACK_ID}/secrets/rpass
     dbuser:
-        external: true
+        file: ${STACK_DIR}/${STACK_ID}/secrets/dbuser
     dbpass:
-        external: true
+        file: ${STACK_DIR}/${STACK_ID}/secrets/dbpass
 networks:
     dmz:
-    web:
     data:
+        internal: true
